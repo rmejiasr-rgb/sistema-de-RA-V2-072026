@@ -1,0 +1,80 @@
+:root {
+  /* Paleta institucional UNIMET (placeholder — ajustar con códigos hex del
+     manual de marca antes de Fase 2, ver spec §9). Centralizado aquí para
+     poder cambiarla en un solo lugar. */
+  --color-primario: #003876;
+  --color-primario-claro: #2f5f9e;
+  --color-acento: #f37021;
+  --color-acento-claro: #ffb27a;
+  --color-verde: #1f8a4c;
+  --color-amarillo: #c98a12;
+  --color-rojo: #c0392b;
+
+  --text: #1f2430;
+  --text-suave: #5a6270;
+  --bg: #f5f6f8;
+  --superficie: #ffffff;
+  --borde: #dde1e6;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font: 15px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #e5e7eb;
+    --text-suave: #9aa1ad;
+    --bg: #14161c;
+    --superficie: #1c1f27;
+    --borde: #2c303a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+h1, h2, h3 {
+  margin: 0 0 8px;
+  color: var(--text);
+}
+
+button {
+  font: inherit;
+  background: var(--color-primario);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--color-primario-claro);
+}
+
+button:disabled {
+  background: var(--borde);
+  cursor: not-allowed;
+}
+
+input, select {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  background: var(--superficie);
+  color: var(--text);
+}
+
+a {
+  color: var(--color-primario-claro);
+}

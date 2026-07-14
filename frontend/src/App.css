@@ -1,0 +1,146 @@
+.pantalla-centrada {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.tarjeta {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.formulario-login {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 4px solid var(--color-acento);
+}
+
+.formulario-login label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-suave);
+}
+
+.subtitulo {
+  color: var(--text-suave);
+  margin-bottom: 16px;
+}
+
+.mensaje-error {
+  color: var(--color-rojo);
+}
+
+.app-shell {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 24px;
+  background: var(--color-primario);
+  color: white;
+  border-bottom: 4px solid var(--color-acento);
+}
+
+.cabecera .marca {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.cabecera nav {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+}
+
+.cabecera nav a {
+  color: white;
+  text-decoration: none;
+  opacity: 0.9;
+}
+
+.cabecera nav a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.usuario-actual {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.usuario-actual button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.contenedor {
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.filtros {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla th, .tabla td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--borde);
+  font-size: 14px;
+}
+
+.punto-semaforo {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.reporte ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.reporte-error {
+  border-left: 4px solid var(--color-rojo);
+}
+
+.reporte-advertencia {
+  border-left: 4px solid var(--color-amarillo);
+}
+
+.reporte-ok {
+  border-left: 4px solid var(--color-verde);
+}
+
+.lista-hallazgos {
+  margin-top: 12px;
+  padding-left: 20px;
+  color: var(--color-rojo);
+  font-size: 14px;
+}
