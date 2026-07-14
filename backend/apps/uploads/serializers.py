@@ -1,6 +1,24 @@
 from rest_framework import serializers
 
-from .models import Carga, Criterio, Evaluacion, ResultadoCriterio, ResultadoEstudiante
+from .models import (
+    AuditLog,
+    Carga,
+    Criterio,
+    Evaluacion,
+    ResultadoCriterio,
+    ResultadoEstudiante,
+)
+
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    usuario_nombre = serializers.CharField(source="usuario.get_full_name", read_only=True, default=None)
+
+    class Meta:
+        model = AuditLog
+        fields = [
+            "id", "timestamp", "usuario", "usuario_nombre", "entidad", "entidad_id",
+            "campo", "valor_anterior", "valor_nuevo", "motivo",
+        ]
 
 
 class CargaSerializer(serializers.ModelSerializer):

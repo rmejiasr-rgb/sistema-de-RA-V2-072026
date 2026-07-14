@@ -1,3 +1,4 @@
+from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from . import views
@@ -10,4 +11,7 @@ router.register("materias", views.MateriaViewSet, basename="materia")
 router.register("ras", views.RACatalogoViewSet, basename="ra")
 router.register("materia-ras", views.MateriaRAViewSet, basename="materia-ra")
 
-urlpatterns = router.urls
+urlpatterns = router.urls + [
+    path("periodos/<int:pk>/completitud/", views.CompletitudPeriodoView.as_view(), name="periodo-completitud"),
+    path("periodos/<int:pk>/cerrar/", views.CerrarPeriodoView.as_view(), name="periodo-cerrar"),
+]

@@ -4,9 +4,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Carga, Evaluacion
-from .permisos import cargas_visibles, evaluaciones_visibles
-from .serializers import CargaSerializer, EvaluacionDetalleSerializer, EvaluacionSerializer
+from .metadatos import editar_estudiante, editar_metadatos_evaluacion
+from .models import AuditLog, Carga, Evaluacion, ResultadoEstudiante
+from .permisos import cargas_visibles, evaluaciones_visibles, puede_editar_metadatos
+from .serializers import (
+    AuditLogSerializer,
+    CargaSerializer,
+    EvaluacionDetalleSerializer,
+    EvaluacionSerializer,
+)
 from .services import CargaRechazada, procesar_carga
 
 
@@ -91,3 +97,63 @@ class EvaluacionDetalleView(generics.RetrieveAPIView):
         return evaluaciones_visibles(self.request.user).select_related(
             "materia", "ra", "periodo"
         ).prefetch_related("criterios", "resultados_estudiantes__resultados_criterios__criterio")
+
+
+class EvaluacionMetadatosView(APIView):
+    """PATCH de metadatos (actividad, fecha, profesor, sección) con auditoría.
+    Las notas/resultados NO se editan aquí: solo re-subiendo el archivo."""
+
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        evaluacion = evaluaciones_visibles(request.user).select_related(
+            "carga", "materia"
+        ).filter(pk=pk).first()
+        if evaluacion is None:
+            return Response({"detail": "Evaluación no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+        if not puede_editar_metadatos(request.user, evaluacion):
+            return Response({"detail": "No tiene permiso para editar esta evaluación."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        motivo = request.data.get("motivo", "")
+        cambios = editar_metadatos_evaluacion(request.user, evaluacion, request.data, motivo=motivo)
+        return Response({"cambios": cambios, "evaluacion": EvaluacionSerializer(evaluacion).data})
+
+
+class EstudianteMetadatosView(APIView):
+    """PATCH de nombre/carrera/grupo de un estudiante (corrección de nombre mal escrito)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        estudiante = ResultadoEstudiante.objects.select_related(
+            "evaluacion__carga", "evaluacion__materia"
+        ).filter(pk=pk).first()
+        if estudiante is None:
+            return Response({"detail": "Estudiante no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        if not evaluaciones_visibles(request.user).filter(pk=estudiante.evaluacion_id).exists():
+            return Response({"detail": "No encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        if not puede_editar_metadatos(request.user, estudiante.evaluacion):
+            return Response({"detail": "No tiene permiso para editar este registro."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        motivo = request.data.get("motivo", "")
+        cambios = editar_estudiante(request.user, estudiante, request.data, motivo=motivo)
+        return Response({"cambios": cambios})
+
+
+class AuditLogView(generics.ListAPIView):
+    """Historial de auditoría de una entidad (para mostrar en la UI)."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = AuditLogSerializer
+
+    def get_queryset(self):
+        qs = AuditLog.objects.select_related("usuario")
+        entidad = self.request.query_params.get("entidad")
+        entidad_id = self.request.query_params.get("entidad_id")
+        if entidad:
+            qs = qs.filter(entidad=entidad)
+        if entidad_id:
+            qs = qs.filter(entidad_id=str(entidad_id))
+        return qs

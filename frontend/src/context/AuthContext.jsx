@@ -37,8 +37,16 @@ export function AuthProvider({ children }) {
     setUsuario(null);
   };
 
+  const tieneRol = (rol) =>
+    !!usuario && (usuario.is_superuser || (usuario.roles || []).some((r) => r.rol === rol));
+
+  const esCoordinador = tieneRol("COORDINADOR");
+  const esAdministrador = !!usuario && (usuario.is_superuser || tieneRol("ADMINISTRADOR"));
+
   return (
-    <AuthContext.Provider value={{ usuario, cargando, login, logout }}>
+    <AuthContext.Provider
+      value={{ usuario, cargando, login, logout, tieneRol, esCoordinador, esAdministrador }}
+    >
       {children}
     </AuthContext.Provider>
   );
