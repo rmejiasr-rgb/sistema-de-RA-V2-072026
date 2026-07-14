@@ -144,3 +144,102 @@
   color: var(--color-rojo);
   font-size: 14px;
 }
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.tab {
+  background: var(--superficie);
+  color: var(--text-suave);
+  border: 1px solid var(--borde);
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.tab.activa {
+  background: var(--color-primario);
+  color: white;
+  border-color: var(--color-primario);
+}
+
+.heatmap-scroll {
+  overflow-x: auto;
+}
+
+.heatmap {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.heatmap th, .heatmap td {
+  border: 1px solid var(--borde);
+  padding: 6px 8px;
+  text-align: center;
+  min-width: 54px;
+}
+
+.heatmap thead th, .heatmap tbody th {
+  background: var(--bg);
+  position: sticky;
+  font-weight: 600;
+}
+
+.heatmap tbody th {
+  text-align: left;
+  left: 0;
+}
+
+.dos-columnas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .dos-columnas { grid-template-columns: 1fr; }
+}
+
+.kpi-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.kpi {
+  flex: 1;
+  min-width: 140px;
+  background: var(--bg);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-suave);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpi-num {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-primario);
+}
+
+.kpi-linea {
+  margin-bottom: 12px;
+}
+
+.fila-alerta {
+  background: rgba(192, 57, 43, 0.08);
+}
+
+h4 {
+  margin: 16px 0 8px;
+  font-size: 15px;
+}

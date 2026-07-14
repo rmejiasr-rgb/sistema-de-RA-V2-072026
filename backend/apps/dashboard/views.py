@@ -1,11 +1,13 @@
 from django.conf import settings
-from django.db.models import Count, Q
+from django.db.models import Count
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.uploads.models import Evaluacion, ResultadoCriterio
+from apps.uploads.models import ResultadoCriterio
 from apps.uploads.permisos import evaluaciones_visibles
+
+from . import services
 
 
 def color_semaforo(pct):
@@ -112,3 +114,68 @@ class DesagregacionCriterioView(APIView):
 
         resultados.sort(key=lambda d: d["criterio"])
         return Response({"resultados": resultados})
+
+
+class _BloqueBaseView(APIView):
+    """Base para bloques 3-7: aplica visibilidad por rol + filtros globales."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self, request):
+        qs = evaluaciones_visibles(request.user).filter(vigente=True)
+        return _aplicar_filtros(qs, request.query_params)
+
+
+class HeatmapMateriaRAView(_BloqueBaseView):
+    """Bloque 3a: mapa de calor materia × RA (§7.3)."""
+
+    def get(self, request):
+        return Response(services.heatmap_materia_ra(self.get_queryset(request)))
+
+
+class HeatmapCriterioSeccionView(_BloqueBaseView):
+    """Bloque 3b: mapa de calor criterio × sección (§7.3)."""
+
+    def get(self, request):
+        return Response(services.heatmap_criterio_seccion(self.get_queryset(request)))
+
+
+class DesgloseCarreraGrupoView(_BloqueBaseView):
+    """Bloque 4: desglose por carrera y por grupo (§7.4)."""
+
+    def get(self, request):
+        return Response(services.desglose_carrera_grupo(self.get_queryset(request)))
+
+
+class TendenciasView(_BloqueBaseView):
+    """Bloque 5: tendencias históricas (§7.5)."""
+
+    def get(self, request):
+        return Response(services.tendencias_historicas(self.get_queryset(request)))
+
+
+class CoberturaView(_BloqueBaseView):
+    """Bloque 6: cobertura y completitud (§7.6)."""
+
+    def get(self, request):
+        qs = self.get_queryset(request)
+        return Response(services.cobertura_completitud(
+            qs,
+            periodo_id=request.query_params.get("periodo") or None,
+            escuela_id=request.query_params.get("escuela") or None,
+        ))
+
+
+class RiesgoAcreditacionView(_BloqueBaseView):
+    """Bloque 7: riesgo de acreditación (§7.7)."""
+
+    def get(self, request):
+        n = int(request.query_params.get("n_periodos", 2))
+        return Response(services.riesgo_acreditacion(self.get_queryset(request), n_periodos=n))
+
+
+class ProxyConsistenciaView(_BloqueBaseView):
+    """Bloque secundario: proxy de consistencia entre evaluadores (§7)."""
+
+    def get(self, request):
+        return Response(services.proxy_consistencia(self.get_queryset(request)))
