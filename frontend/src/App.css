@@ -298,3 +298,16 @@ button.secundario, .btn-mini.secundario {
   gap: 12px;
   margin-top: 8px;
 }
+
+.titulo-con-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.acciones-export {
+  display: flex;
+  gap: 8px;
+}

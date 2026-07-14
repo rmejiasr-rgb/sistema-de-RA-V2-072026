@@ -12,4 +12,6 @@ urlpatterns = [
     path("cobertura/", views.CoberturaView.as_view(), name="dashboard-cobertura"),
     path("riesgo/", views.RiesgoAcreditacionView.as_view(), name="dashboard-riesgo"),
     path("proxy-consistencia/", views.ProxyConsistenciaView.as_view(), name="dashboard-proxy"),
+    path("export/excel/", views.ExportExcelView.as_view(), name="dashboard-export-excel"),
+    path("export/pdf/", views.ExportPDFView.as_view(), name="dashboard-export-pdf"),
 ]

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <style>
+    @page {
+      size: A4;
+      margin: 2cm 1.5cm;
+      @bottom-center {
+        content: "Sistema de Gestión y Análisis de RA · UNIMET — página " counter(page) " de " counter(pages);
+        font-size: 9px;
+        color: #666;
+      }
+    }
+    body { font-family: "Helvetica Neue", Arial, sans-serif; color: #1f2430; font-size: 11px; }
+    .portada {
+      text-align: center;
+      padding-top: 6cm;
+      page-break-after: always;
+    }
+    .portada .barra { height: 8px; background: #f37021; margin: 0 auto 1cm; width: 60%; }
+    .portada h1 { color: #003876; font-size: 28px; margin-bottom: 8px; }
+    .portada h2 { color: #5a6270; font-size: 16px; font-weight: normal; }
+    .portada .meta { margin-top: 2cm; color: #5a6270; font-size: 13px; }
+    h3 {
+      color: #003876; border-bottom: 2px solid #f37021; padding-bottom: 4px;
+      margin-top: 20px; font-size: 15px;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th { background: #003876; color: #fff; padding: 6px; text-align: left; font-size: 10px; }
+    td { padding: 5px 6px; border-bottom: 1px solid #dde1e6; font-size: 10px; }
+    .kpis { display: flex; gap: 12px; margin: 12px 0; }
+    .kpi {
+      flex: 1; border: 1px solid #dde1e6; border-radius: 6px; padding: 10px;
+      text-align: center; background: #f5f6f8;
+    }
+    .kpi .num { font-size: 22px; font-weight: bold; color: #003876; display: block; }
+    .kpi .lbl { font-size: 9px; color: #5a6270; }
+    .sem { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+    .verde { background: #1f8a4c; } .amarillo { background: #c98a12; } .rojo { background: #c0392b; }
+    .hallazgo { color: #c0392b; font-size: 10px; margin: 3px 0; }
+    .nota { color: #5a6270; font-style: italic; font-size: 9px; }
+  </style>
+</head>
+<body>
+  <div class="portada">
+    <div class="barra"></div>
+    <h1>Reporte de Resultados de Aprendizaje</h1>
+    <h2>{{ titulo }}</h2>
+    <div class="meta">
+      <p>Universidad Metropolitana</p>
+      <p>Generado el {{ fecha_generacion }}</p>
+      <p>Por: {{ usuario }}</p>
+    </div>
+  </div>
+
+  <h3>Indicadores generales</h3>
+  <div class="kpis">
+    <div class="kpi"><span class="num">{{ kpis.n_evaluaciones }}</span><span class="lbl">Evaluaciones</span></div>
+    <div class="kpi"><span class="num">{{ kpis.pct_promedio }}%</span><span class="lbl">% aprobados promedio</span></div>
+    <div class="kpi"><span class="num">{{ kpis.n_verde }}</span><span class="lbl">RA en verde</span></div>
+    <div class="kpi"><span class="num">{{ kpis.n_rojo }}</span><span class="lbl">RA en rojo</span></div>
+  </div>
+
+  <h3>Cumplimiento por RA (semáforo)</h3>
+  <table>
+    <thead>
+      <tr><th>Materia</th><th>Sección</th><th>RA</th><th>Nivel</th><th>% Aprobados</th><th>Semáforo</th></tr>
+    </thead>
+    <tbody>
+      {% for f in cumplimiento %}
+      <tr>
+        <td>{{ f.materia }}</td><td>{{ f.seccion }}</td><td>{{ f.ra }}</td>
+        <td>{{ f.nivel }}</td><td>{{ f.pct }}%</td>
+        <td><span class="sem {{ f.color }}"></span> {{ f.semaforo }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Completitud del periodo</h3>
+  <p>{{ completitud.pct }}% completo — {{ completitud.completas }} de {{ completitud.total }} combinaciones materia/sección completas.</p>
+  {% if completitud.incompletas %}
+  <table>
+    <thead><tr><th>Materia</th><th>Sección</th><th>Faltantes</th></tr></thead>
+    <tbody>
+      {% for i in completitud.incompletas %}
+      <tr><td>{{ i.materia }}</td><td>{{ i.seccion }}</td><td>{{ i.faltantes }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <h3>Hallazgos automáticos</h3>
+  {% if hallazgos %}
+    {% for h in hallazgos %}<p class="hallazgo">• {{ h }}</p>{% endfor %}
+  {% else %}
+    <p class="nota">Sin hallazgos críticos para el filtro seleccionado.</p>
+  {% endif %}
+</body>
+</html>

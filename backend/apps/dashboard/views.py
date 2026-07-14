@@ -1,13 +1,18 @@
 from django.conf import settings
 from django.db.models import Count
+from django.http import HttpResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.uploads.models import ResultadoCriterio
+from apps.catalog.completitud import completitud_periodo
+from apps.catalog.models import Periodo
+from apps.uploads.models import AuditLog, ResultadoCriterio
 from apps.uploads.permisos import evaluaciones_visibles
 
 from . import services
+from .export_excel import exportar_evaluaciones_excel
+from .export_pdf import exportar_reporte_pdf
 
 
 def color_semaforo(pct):
@@ -179,3 +184,61 @@ class ProxyConsistenciaView(_BloqueBaseView):
 
     def get(self, request):
         return Response(services.proxy_consistencia(self.get_queryset(request)))
+
+
+def _registrar_export(usuario, formato, params):
+    AuditLog.objects.create(
+        usuario=usuario, entidad="Exportacion", entidad_id=formato,
+        campo="filtros", valor_anterior="", valor_nuevo=str(dict(params)),
+        motivo=f"Exportación de reporte a {formato}.",
+    )
+
+
+class ExportExcelView(_BloqueBaseView):
+    """Exporta los datos filtrados del tablero a Excel (§8). Auditado."""
+
+    def get(self, request):
+        qs = self.get_queryset(request)
+        contenido = exportar_evaluaciones_excel(
+            qs, settings.SEMAFORO_UMBRAL_VERDE, settings.SEMAFORO_UMBRAL_AMARILLO
+        )
+        _registrar_export(request.user, "EXCEL", request.query_params)
+        resp = HttpResponse(
+            contenido,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        resp["Content-Disposition"] = 'attachment; filename="reporte_ra.xlsx"'
+        return resp
+
+
+class ExportPDFView(_BloqueBaseView):
+    """Exporta el reporte gerencial a PDF (§8). Auditado."""
+
+    def get(self, request):
+        qs = self.get_queryset(request)
+        periodo_id = request.query_params.get("periodo")
+        completitud = None
+        titulo = "Reporte general"
+        if periodo_id:
+            periodo = Periodo.objects.filter(pk=periodo_id).first()
+            if periodo:
+                titulo = f"Periodo {periodo.codigo}"
+                escuelas = None if request.user.es_administrador else list(
+                    request.user.escuelas_coordinadas().values_list("id", flat=True)
+                )
+                resumen = completitud_periodo(periodo, escuelas_ids=escuelas)
+                completitud = {
+                    "pct": resumen["pct_completitud"],
+                    "completas": resumen["n_completas"],
+                    "total": resumen["total_combinaciones"],
+                    "incompletas": [
+                        {"materia": i["materia"], "seccion": i["seccion"],
+                         "faltantes": ", ".join(i["faltantes"])}
+                        for i in resumen["incompletas"][:40]
+                    ],
+                }
+        contenido = exportar_reporte_pdf(qs, request.user, titulo, completitud=completitud)
+        _registrar_export(request.user, "PDF", request.query_params)
+        resp = HttpResponse(contenido, content_type="application/pdf")
+        resp["Content-Disposition"] = 'attachment; filename="reporte_ra.pdf"'
+        return resp

@@ -4,6 +4,7 @@ import {
   Tooltip, XAxis, YAxis,
 } from "recharts";
 import client from "../api/client";
+import { descargarArchivo } from "../api/descargas";
 import Heatmap from "../components/Heatmap";
 
 const COLOR_SEMAFORO = {
@@ -43,9 +44,32 @@ export default function Dashboard() {
     return p;
   }, [filtros]);
 
+  const [exportando, setExportando] = useState("");
+  const exportar = async (formato) => {
+    setExportando(formato);
+    try {
+      await descargarArchivo(
+        `/dashboard/export/${formato}/`, params,
+        formato === "excel" ? "reporte_ra.xlsx" : "reporte_ra.pdf"
+      );
+    } finally {
+      setExportando("");
+    }
+  };
+
   return (
     <div className="contenedor">
-      <h2>Tablero analítico</h2>
+      <div className="titulo-con-acciones">
+        <h2>Tablero analítico</h2>
+        <div className="acciones-export">
+          <button className="secundario" onClick={() => exportar("excel")} disabled={!!exportando}>
+            {exportando === "excel" ? "Generando…" : "Exportar Excel"}
+          </button>
+          <button className="secundario" onClick={() => exportar("pdf")} disabled={!!exportando}>
+            {exportando === "pdf" ? "Generando…" : "Exportar PDF"}
+          </button>
+        </div>
+      </div>
 
       <div className="tarjeta filtros">
         <select value={filtros.periodo} onChange={(e) => setFiltros({ ...filtros, periodo: e.target.value })}>
