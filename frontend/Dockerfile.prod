@@ -1,0 +1,20 @@
+# Build del frontend (Vite) y servido como estático por nginx (ver
+# docker-compose.prod.yml, donde nginx monta este build).
+FROM node:22-alpine AS build
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+# La URL de la API en producción es relativa al mismo dominio (/api)
+ARG VITE_API_URL=/api
+ARG VITE_SSO_ENABLED=false
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_SSO_ENABLED=$VITE_SSO_ENABLED
+RUN npm run build
+
+# El resultado queda en /app/dist; se copia a un volumen compartido con nginx.
+FROM alpine:3.20
+RUN mkdir -p /output
+COPY --from=build /app/dist /dist
+CMD ["sh", "-c", "cp -r /dist/. /output/ && echo 'Frontend build copiado a volumen compartido' && tail -f /dev/null"]

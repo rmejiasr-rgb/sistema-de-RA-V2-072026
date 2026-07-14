@@ -24,3 +24,9 @@ npm-debug.log*
 
 # Docker
 *.pid
+
+# Producción / secretos / backups (nunca subir)
+.env
+.env.prod
+backups/
+deploy/nginx/certs/*.pem

@@ -1,9 +1,17 @@
 # Sistema de Gestión y Análisis de Resultados de Aprendizaje (RA) · UNIMET
 
-Implementación de la **Fase 1** de la especificación (`SPECSistemaRAUNIMET.md`): núcleo
-monousuario funcional de punta a punta — modelos de datos, parser de Excel, motor de
-validaciones V1–V6, catálogo Materia→RA vía Django admin, API REST y un tablero mínimo
-(bloques 1 y 2) con login.
+Implementación de las **Fases 1 a 4** de la especificación (`SPECSistemaRAUNIMET.md`):
+
+- **Fase 1 — Núcleo**: modelos de datos, parser de Excel, validaciones V1–V6,
+  catálogo Materia→RA, API REST, tablero mínimo (bloques 1–2) y login local.
+- **Fase 2 — Analítica**: bloques 3–7 del tablero (mapas de calor, carrera/grupo,
+  tendencias, cobertura, riesgo) + proxy de consistencia, cierre de periodo (V6),
+  edición de metadatos con auditoría, exportación Excel/PDF, seed sintético a
+  escala (~3.000 evaluaciones, tableros <2 s) e identidad visual UNIMET.
+- **Fase 3 — Multiusuario**: roles y permisos, pantallas de coordinador (catálogo,
+  completitud, faltantes), gestión de usuarios y SSO Microsoft Entra ID (opcional).
+- **Fase 4 — Despliegue**: docker-compose de producción (nginx + TLS + gunicorn),
+  HTTPS, backups automatizados y manuales de usuario (ver `docs/`).
 
 ## Nota sobre el stack
 
@@ -71,27 +79,52 @@ source venv/bin/activate
 python manage.py test apps.uploads -v 2
 ```
 
-Cubre (§11 del spec):
+Ejecutar toda la suite: `python manage.py test apps` (51 tests). Cubre (§11 del spec):
 - Parser contra los 2 archivos Excel reales (`apps/uploads/tests/fixtures/`): valores
   exactos de cabecera, número de criterios, número de estudiantes y notas.
 - Cada validación V1–V6, incluyendo el caso permitido de "Sección 2".
 - Recálculo de % de aprobados == declarado en los archivos reales.
 - Versionado: una re-subida con la misma clave de negocio reemplaza los datos vigentes y
   conserva la versión anterior consultable.
+- Cierre de periodo, edición de metadatos con auditoría, exportación Excel/PDF y
+  gestión de catálogo/usuarios por rol.
 
-## Uso del catálogo (Fase 1)
+## Datos de prueba a escala
 
-El catálogo Materia→RA (qué RA y en qué nivel debe evidenciar cada materia) se administra
-desde `/admin/` (Django admin), tal como especifica el documento para la Fase 1. Antes de
-poder subir archivos hace falta registrar ahí: Escuela, Materia, Periodo, RACatalogo y
-MateriaRA.
+```bash
+python manage.py seed_demo --escala 3000        # ~3.000 evaluaciones × ~40 estudiantes
+python manage.py seed_demo --limpiar --escala 500
+```
 
-## Qué falta para las siguientes fases
+Genera datos sintéticos (sin datos personales reales) multi-periodo para probar el
+rendimiento de los tableros (<2 s).
 
-- **Fase 2**: bloques 3–7 del tablero, cierre de periodo, edición de metadatos con
-  auditoría en pantalla, exportación a Excel/PDF (WeasyPrint), seed sintético a escala e
-  identidad visual UNIMET definitiva (colores del manual de marca — hoy son un placeholder
-  en `frontend/src/index.css`).
-- **Fase 3**: pantallas de coordinador, SSO Microsoft Entra ID, gestión de usuarios desde
-  la UI (hoy solo por Django admin).
-- **Fase 4**: despliegue en el servidor de TI UNIMET, HTTPS, backups automatizados.
+## Catálogo Materia→RA
+
+Define qué RA y en qué nivel debe evidenciar cada materia. Se administra desde la pantalla
+**Catálogo** (coordinador/administrador) o desde `/admin/`. Antes de poder subir archivos
+hace falta registrar: Escuela, Materia, Periodo, RACatalogo y MateriaRA.
+
+## Despliegue en producción
+
+Ver **`docs/DESPLIEGUE.md`** (docker-compose de producción con nginx + TLS + gunicorn,
+backups automatizados). Manuales por rol en **`docs/MANUAL_USUARIO.md`**. SSO Microsoft
+Entra ID en **`docs/SSO_ENTRA.md`**.
+
+```bash
+cp .env.prod.example .env   # completar secretos y dominio
+# colocar certificados en deploy/nginx/certs/
+docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+```
+
+## Notas de la implementación
+
+- **Identidad visual UNIMET**: la paleta institucional está centralizada en variables CSS
+  (`frontend/src/index.css`) y en la plantilla del PDF. Los códigos hex actuales son un
+  **placeholder** aproximado (naranja/azul): confirmar los valores exactos con el manual de
+  marca y ajustarlos en ese único lugar.
+- **SSO Microsoft Entra ID**: implementado como integración opcional (`SSO_ENABLED`), lista
+  para activarse en cuanto TI UNIMET registre la aplicación en Entra ID. Mientras tanto, el
+  login local/JWT funciona por defecto. Ver `docs/SSO_ENTRA.md`.
+- **Trámites con TI UNIMET** (servidor, subdominio+TLS, registro en Entra ID): son
+  externos al código; la guía `docs/DESPLIEGUE.md` los enumera.
