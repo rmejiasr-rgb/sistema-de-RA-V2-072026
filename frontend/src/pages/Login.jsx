@@ -49,6 +49,15 @@ export default function Login() {
         <button type="submit" disabled={enviando}>
           {enviando ? "Ingresando..." : "Ingresar"}
         </button>
+
+        {import.meta.env.VITE_SSO_ENABLED === "true" && (
+          <a
+            className="boton-sso"
+            href={`${(import.meta.env.VITE_API_URL || "").replace(/\/api$/, "")}/accounts/microsoft/login/`}
+          >
+            Ingresar con Microsoft (@unimet.edu.ve)
+          </a>
+        )}
       </form>
     </div>
   );

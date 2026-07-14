@@ -114,7 +114,56 @@ class RACatalogoViewSet(CatalogoReadOnlyViewSet):
     serializer_class = RACatalogoSerializer
 
 
-class MateriaRAViewSet(CatalogoReadOnlyViewSet):
-    queryset = MateriaRA.objects.select_related("materia", "ra").all()
+class MateriaRAViewSet(viewsets.ModelViewSet):
+    """Catálogo Materia→RA. Lectura para todos; gestión (crear/editar/borrar)
+    solo para coordinador de la escuela de la materia o administrador (§3)."""
+
+    queryset = MateriaRA.objects.select_related("materia", "ra", "materia__escuela").all()
     serializer_class = MateriaRASerializer
-    filterset_fields = ["materia"]
+    filterset_fields = ["materia", "materia__escuela"]
+    pagination_class = None
+
+    def get_permissions(self):
+        from apps.accounts.permissions import LecturaOCoordinador
+        return [LecturaOCoordinador()]
+
+    def _verificar_escuela(self, materia):
+        u = self.request.user
+        if u.es_administrador:
+            return True
+        return u.escuelas_coordinadas().filter(id=materia.escuela_id).exists()
+
+    def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+
+        materia = serializer.validated_data["materia"]
+        if not self._verificar_escuela(materia):
+            raise PermissionDenied("Solo puede gestionar el catálogo de su escuela.")
+        obj = serializer.save()
+        self._auditar("crear", obj, "")
+
+    def perform_update(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
+
+        materia = serializer.validated_data.get("materia", serializer.instance.materia)
+        if not self._verificar_escuela(materia):
+            raise PermissionDenied("Solo puede gestionar el catálogo de su escuela.")
+        anterior = f"{serializer.instance.ra.codigo} N{serializer.instance.nivel_esperado}"
+        obj = serializer.save()
+        self._auditar("editar", obj, anterior)
+
+    def perform_destroy(self, instance):
+        from rest_framework.exceptions import PermissionDenied
+
+        if not self._verificar_escuela(instance.materia):
+            raise PermissionDenied("Solo puede gestionar el catálogo de su escuela.")
+        self._auditar("borrar", instance, f"{instance.ra.codigo} N{instance.nivel_esperado}")
+        instance.delete()
+
+    def _auditar(self, accion, obj, anterior):
+        AuditLog.objects.create(
+            usuario=self.request.user, entidad="MateriaRA", entidad_id=str(obj.id),
+            campo="catalogo", valor_anterior=anterior,
+            valor_nuevo=f"{obj.materia.codigo} → {obj.ra.codigo} N{obj.nivel_esperado}",
+            motivo=f"Gestión de catálogo ({accion}).",
+        )

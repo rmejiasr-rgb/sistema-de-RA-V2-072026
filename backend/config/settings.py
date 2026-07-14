@@ -45,6 +45,42 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# --- SSO Microsoft Entra ID (Fase 3, opcional) -------------------------------
+# Desactivado por defecto: la Fase 1 usa login local de Django/JWT. Se activa
+# con SSO_ENABLED=True una vez que TI UNIMET registre la aplicación en Entra ID
+# (client id/secret/redirect). Ver docs/SSO_ENTRA.md.
+SSO_ENABLED = os.environ.get("SSO_ENABLED", "False") == "True"
+SSO_DOMINIO_PERMITIDO = os.environ.get("SSO_DOMINIO_PERMITIDO", "unimet.edu.ve")
+
+if SSO_ENABLED:
+    INSTALLED_APPS += [
+        "django.contrib.sites",
+        "allauth",
+        "allauth.account",
+        "allauth.socialaccount",
+        "allauth.socialaccount.providers.microsoft",
+    ]
+    MIDDLEWARE += ["allauth.account.middleware.AccountMiddleware"]
+    SITE_ID = 1
+    AUTHENTICATION_BACKENDS = [
+        "django.contrib.auth.backends.ModelBackend",
+        "allauth.account.auth_backends.AuthenticationBackend",
+    ]
+    SOCIALACCOUNT_PROVIDERS = {
+        "microsoft": {
+            "APPS": [{
+                "client_id": os.environ.get("ENTRA_CLIENT_ID", ""),
+                "secret": os.environ.get("ENTRA_CLIENT_SECRET", ""),
+                "settings": {"tenant": os.environ.get("ENTRA_TENANT_ID", "organizations")},
+            }],
+        }
+    }
+    # Solo se aceptan correos del dominio institucional.
+    SOCIALACCOUNT_EMAIL_REQUIRED = True
+    ACCOUNT_EMAIL_VERIFICATION = "none"
+    SOCIALACCOUNT_ADAPTER = "apps.accounts.adapters.DominioSocialAccountAdapter"
+    LOGIN_REDIRECT_URL = os.environ.get("SSO_LOGIN_REDIRECT", "/")
+
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [

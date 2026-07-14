@@ -5,6 +5,8 @@ import Carga from "./pages/Carga";
 import Dashboard from "./pages/Dashboard";
 import CierrePeriodo from "./pages/CierrePeriodo";
 import Cargas from "./pages/Cargas";
+import Catalogo from "./pages/Catalogo";
+import Usuarios from "./pages/Usuarios";
 import "./App.css";
 
 function RutaProtegida({ children, rol }) {
@@ -12,6 +14,9 @@ function RutaProtegida({ children, rol }) {
   if (cargando) return <div className="pantalla-centrada">Cargando…</div>;
   if (!usuario) return <Navigate to="/login" replace />;
   if (rol === "coordinador" && !(esCoordinador || esAdministrador)) {
+    return <Navigate to="/tablero" replace />;
+  }
+  if (rol === "admin" && !esAdministrador) {
     return <Navigate to="/tablero" replace />;
   }
   return children;
@@ -34,7 +39,9 @@ function Layout({ children }) {
           <Link to="/tablero">Tablero</Link>
           <Link to="/carga">Cargar archivo</Link>
           <Link to="/cargas">Mis cargas</Link>
+          {(esCoordinador || esAdministrador) && <Link to="/catalogo">Catálogo</Link>}
           {(esCoordinador || esAdministrador) && <Link to="/cierre">Cierre de periodo</Link>}
+          {esAdministrador && <Link to="/usuarios">Usuarios</Link>}
         </nav>
         <div className="usuario-actual">
           <span>{usuario?.first_name || usuario?.username}</span>
@@ -62,7 +69,9 @@ function App() {
         <Route path="/tablero" element={<Protegida><Dashboard /></Protegida>} />
         <Route path="/carga" element={<Protegida><Carga /></Protegida>} />
         <Route path="/cargas" element={<Protegida><Cargas /></Protegida>} />
+        <Route path="/catalogo" element={<Protegida rol="coordinador"><Catalogo /></Protegida>} />
         <Route path="/cierre" element={<Protegida rol="coordinador"><CierrePeriodo /></Protegida>} />
+        <Route path="/usuarios" element={<Protegida rol="admin"><Usuarios /></Protegida>} />
         <Route path="*" element={<Navigate to="/tablero" replace />} />
       </Routes>
     </AuthProvider>

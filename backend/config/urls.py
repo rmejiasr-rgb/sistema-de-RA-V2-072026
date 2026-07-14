@@ -11,5 +11,9 @@ urlpatterns = [
     path("api/dashboard/", include("apps.dashboard.urls")),
 ]
 
+if settings.SSO_ENABLED:
+    # SSO Microsoft Entra ID (django-allauth). Ver docs/SSO_ENTRA.md.
+    urlpatterns += [path("accounts/", include("allauth.urls"))]
+
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
