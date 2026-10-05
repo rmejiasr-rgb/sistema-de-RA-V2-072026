@@ -6,6 +6,8 @@ from datetime import timedelta
 from pathlib import Path
 import os
 
+import dj_database_url
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get(
@@ -36,6 +38,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # WhiteNoise sirve los archivos estáticos (y la app visual) en producción,
+    # justo después del middleware de seguridad y antes de todo lo demás.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -101,16 +106,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("POSTGRES_DB", "sistema_ra"),
-        "USER": os.environ.get("POSTGRES_USER", "sistema_ra"),
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "sistema_ra"),
-        "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
-        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+# Base de datos: en la nube (p. ej. Render) se entrega una sola variable
+# DATABASE_URL; en local se usan las variables POSTGRES_* por separado.
+if os.environ.get("DATABASE_URL"):
+    DATABASES = {
+        "default": dj_database_url.parse(
+            os.environ["DATABASE_URL"], conn_max_age=600
+        )
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("POSTGRES_DB", "sistema_ra"),
+            "USER": os.environ.get("POSTGRES_USER", "sistema_ra"),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "sistema_ra"),
+            "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
+            "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+        }
+    }
 
 AUTH_USER_MODEL = "accounts.Usuario"
 
@@ -131,6 +145,20 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# WhiteNoise: comprime y cachea los estáticos de Django (admin, DRF).
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
+
+# Aplicación visual (React) ya compilada. En producción la imagen copia el
+# resultado del build a esta carpeta; WhiteNoise la sirve en la raíz del sitio,
+# de modo que backend y frontend viven en la misma dirección (sin CORS).
+SPA_DIR = BASE_DIR / "spa"
+if SPA_DIR.exists():
+    WHITENOISE_ROOT = SPA_DIR
+    WHITENOISE_INDEX_FILE = True
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"

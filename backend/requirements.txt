@@ -6,6 +6,7 @@ charset-normalizer==3.4.9
 cryptography==49.0.0
 cssselect2==0.9.0
 Django==5.0.14
+dj-database-url==3.1.2
 django-allauth==65.18.0
 django-cors-headers==4.9.0
 django-filter==25.1
@@ -31,4 +32,5 @@ tinyhtml5==2.1.0
 urllib3==2.7.0
 weasyprint==69.0
 webencodings==0.5.1
+whitenoise==6.12.0
 zopfli==0.4.3

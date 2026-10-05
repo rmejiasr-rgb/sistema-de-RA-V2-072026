@@ -44,12 +44,20 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f"El usuario '{ADMIN_USER}' ya existe (no se cambia la contraseña).")
 
-        # 2. Datos de ejemplo (solo si la base está vacía)
+        # 2. Datos de ejemplo (solo si la base está vacía). Si por cualquier
+        #    motivo la generación falla, se registra el aviso pero NO se detiene
+        #    el arranque: el sistema igual queda disponible para iniciar sesión.
         if Evaluacion.objects.exists():
             self.stdout.write("Ya hay datos cargados; no se generan datos de ejemplo.")
         else:
             self.stdout.write("Generando datos de ejemplo (puede tardar un momento)…")
-            call_command("seed_demo", escala=opts["escala"])
+            try:
+                call_command("seed_demo", escala=opts["escala"])
+            except Exception as exc:  # noqa: BLE001 — queremos que el arranque no falle
+                self.stderr.write(self.style.WARNING(
+                    f"Aviso: no se pudieron generar los datos de ejemplo ({exc}). "
+                    "El sistema arranca igual; podrás cargar datos manualmente."
+                ))
 
         self.stdout.write("")
         self.stdout.write(self.style.SUCCESS("¡Listo! Ya puedes entrar al sistema."))

@@ -1,0 +1,35 @@
+# Plano de publicación para Render (https://render.com).
+# Define un servicio web (el sistema completo) + una base de datos PostgreSQL,
+# ambos en el plan GRATUITO. Ver docs/PUBLICAR_EN_LA_WEB.md.
+
+databases:
+  - name: sistema-ra-db
+    plan: free
+    databaseName: sistema_ra
+    user: sistema_ra
+
+services:
+  - type: web
+    name: sistema-ra
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    envVars:
+      # La base de datos se conecta sola (Render inyecta la URL).
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sistema-ra-db
+          property: connectionString
+      # Clave secreta generada automáticamente por Render.
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "*"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://*.onrender.com"
+      - key: SECURE_SSL_REDIRECT
+        value: "True"

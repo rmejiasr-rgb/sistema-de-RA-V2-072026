@@ -30,3 +30,6 @@ npm-debug.log*
 .env.prod
 backups/
 deploy/nginx/certs/*.pem
+
+# App visual compilada (se genera dentro de la imagen de producción)
+backend/spa/

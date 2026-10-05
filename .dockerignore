@@ -1,0 +1,20 @@
+# Archivos que NO deben entrar en la construcción de la imagen (Dockerfile.render).
+.git
+.gitignore
+**/__pycache__
+**/*.pyc
+backend/venv
+backend/.venv
+backend/staticfiles
+backend/media
+backend/spa
+frontend/node_modules
+frontend/dist
+*.sqlite3
+.env
+.env.*
+docs
+deploy
+docker-compose*.yml
+Dockerfile
+**/Dockerfile.prod
